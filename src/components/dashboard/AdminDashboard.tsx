@@ -5,7 +5,8 @@ import UserManagement from "@/components/admin/UserManagement";
 import TeamManagement from "@/components/admin/TeamManagement";
 import CategoryRouting from "@/components/admin/CategoryRouting";
 import Analytics from "@/components/admin/Analytics";
-import { BarChart3, Users, Shield, Tag } from "lucide-react";
+import TicketManagement from "@/components/admin/TicketManagement";
+import { BarChart3, Users, Shield, Tag, Ticket } from "lucide-react";
 
 interface AdminDashboardProps {
   user: User;
@@ -23,8 +24,12 @@ const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
           </p>
         </div>
 
-        <Tabs defaultValue="analytics" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+        <Tabs defaultValue="tickets" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="tickets" className="gap-2">
+              <Ticket className="h-4 w-4" />
+              Tickets
+            </TabsTrigger>
             <TabsTrigger value="analytics" className="gap-2">
               <BarChart3 className="h-4 w-4" />
               Analytics
@@ -43,12 +48,16 @@ const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
             </TabsTrigger>
           </TabsList>
 
+          <TabsContent value="tickets">
+            <TicketManagement />
+          </TabsContent>
+
           <TabsContent value="analytics">
             <Analytics />
           </TabsContent>
 
           <TabsContent value="users">
-            <UserManagement />
+            <UserManagement userRole={userRole} />
           </TabsContent>
 
           <TabsContent value="teams">

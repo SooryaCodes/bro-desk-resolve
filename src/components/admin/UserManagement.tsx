@@ -30,7 +30,11 @@ interface Team {
   name: string;
 }
 
-const UserManagement = () => {
+interface UserManagementProps {
+  userRole: string;
+}
+
+const UserManagement = ({ userRole }: UserManagementProps) => {
   const [users, setUsers] = useState<User[]>([]);
   const [userRoles, setUserRoles] = useState<UserRole[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -58,6 +62,15 @@ const UserManagement = () => {
   const getUserRole = (userId: string) => {
     return userRoles.find((r) => r.user_id === userId);
   };
+
+  // Filter users based on current user's role
+  const filteredUsers = users.filter((user) => {
+    const role = getUserRole(user.id);
+    // Super admins can see everyone
+    if (userRole === "super_admin") return true;
+    // Regular admins cannot see super_admins
+    return role?.role !== "super_admin";
+  });
 
   const handleEditUser = (user: User) => {
     setSelectedUser(user);
@@ -143,7 +156,7 @@ const UserManagement = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((user) => {
+            {filteredUsers.map((user) => {
               const userRole = getUserRole(user.id);
               return (
                 <TableRow key={user.id}>
@@ -200,7 +213,9 @@ const UserManagement = () => {
                   <SelectItem value="student">Student</SelectItem>
                   <SelectItem value="team_member">Team Member</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                  {userRole === "super_admin" && (
+                    <SelectItem value="super_admin">Super Admin</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
