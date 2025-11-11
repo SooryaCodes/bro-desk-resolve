@@ -4,9 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle2, Shield, Zap } from "lucide-react";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -76,99 +75,144 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center space-y-2">
-          <h1 className="text-5xl font-bold tracking-tight">BroDesk</h1>
-          <p className="text-muted-foreground text-lg">Raise. Track. Resolve. Learn Together.</p>
+    <div className="min-h-screen flex">
+      {/* Left Side - Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-foreground text-background p-12 flex-col justify-between">
+        <div>
+          <h1 className="text-4xl font-bold mb-2">BroDesk</h1>
+          <p className="text-lg opacity-90">Raise. Track. Resolve. Learn Together.</p>
         </div>
 
-        <Card className="border-border">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl">{isLogin ? 'Sign in' : 'Create account'}</CardTitle>
-            <CardDescription>
+        <div className="space-y-8">
+          <div className="space-y-4">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-background/10 rounded-lg">
+                <Zap className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg mb-1">30-Second Submission</h3>
+                <p className="opacity-80 text-sm">Quick complaint submission with automatic routing to the right team</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-background/10 rounded-lg">
+                <CheckCircle2 className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg mb-1">Transparent Tracking</h3>
+                <p className="opacity-80 text-sm">Real-time status updates and complete visibility into resolution progress</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-background/10 rounded-lg">
+                <Shield className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg mb-1">Full Accountability</h3>
+                <p className="opacity-80 text-sm">Every issue documented, tracked, and assigned with clear responsibility</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="text-sm opacity-70">
+          © 2025 BroDesk. Built for Brototype.
+        </div>
+      </div>
+
+      {/* Right Side - Form */}
+      <div className="flex-1 flex items-center justify-center p-8 bg-background">
+        <div className="w-full max-w-md space-y-8">
+          <div className="lg:hidden text-center mb-8">
+            <h1 className="text-4xl font-bold mb-2">BroDesk</h1>
+            <p className="text-muted-foreground">Raise. Track. Resolve. Learn Together.</p>
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="text-3xl font-bold">{isLogin ? 'Welcome back' : 'Get started'}</h2>
+            <p className="text-muted-foreground">
               {isLogin 
-                ? 'Enter your credentials to access your account' 
-                : 'Fill in your details to get started'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {!isLogin && (
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input
-                    id="fullName"
-                    placeholder="John Doe"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                    disabled={loading}
-                  />
-                </div>
+                ? 'Sign in to access your dashboard' 
+                : 'Create your account to start reporting issues'}
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {!isLogin && (
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input
+                  id="fullName"
+                  placeholder="John Doe"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                  disabled={loading}
+                  className="h-11"
+                />
+              </div>
+            )}
+            
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="your.email@brototype.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={loading}
+                className="h-11"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+                minLength={6}
+                className="h-11"
+              />
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full h-11" 
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Please wait...
+                </>
+              ) : (
+                isLogin ? 'Sign in' : 'Create account'
               )}
-              
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your.email@brototype.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  disabled={loading}
-                />
-              </div>
+            </Button>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  disabled={loading}
-                  minLength={6}
-                />
-              </div>
-
-              <Button 
-                type="submit" 
-                className="w-full" 
+            <div className="text-center text-sm pt-2">
+              <button
+                type="button"
+                onClick={() => setIsLogin(!isLogin)}
+                className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline transition-colors"
                 disabled={loading}
               >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Please wait...
-                  </>
-                ) : (
-                  isLogin ? 'Sign in' : 'Create account'
-                )}
-              </Button>
-
-              <div className="text-center text-sm">
-                <button
-                  type="button"
-                  onClick={() => setIsLogin(!isLogin)}
-                  className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline transition-colors"
-                  disabled={loading}
-                >
-                  {isLogin 
-                    ? "Don't have an account? Sign up" 
-                    : 'Already have an account? Sign in'}
-                </button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-
-        <p className="text-xs text-center text-muted-foreground max-w-sm mx-auto">
-          By continuing, you agree to BroDesk's terms of service and acknowledge our privacy practices.
-        </p>
+                {isLogin 
+                  ? "Don't have an account? Sign up" 
+                  : 'Already have an account? Sign in'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
