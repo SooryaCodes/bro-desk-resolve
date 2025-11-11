@@ -2,7 +2,9 @@ import { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { LogOut, User as UserIcon } from "lucide-react";
+import { NavLink } from "@/components/NavLink";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -76,6 +78,19 @@ const DashboardLayout = ({ children, user, userRole }: DashboardLayoutProps) => 
         <div className="container flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-6">
             <h1 className="text-2xl font-bold tracking-tight">BroDesk</h1>
+            <nav className="hidden md:flex items-center gap-4">
+              <NavLink to="/dashboard" end>
+                Dashboard
+              </NavLink>
+              <NavLink to="/submit-ticket">
+                Submit Ticket
+              </NavLink>
+              {(userRole === 'admin' || userRole === 'super_admin') && (
+                <NavLink to="/admin">
+                  Admin Panel
+                </NavLink>
+              )}
+            </nav>
           </div>
 
           <div className="flex items-center gap-4">
