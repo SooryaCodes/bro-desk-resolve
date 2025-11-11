@@ -54,11 +54,11 @@ const TeamManagement = () => {
       setFormData({
         name: team.name,
         description: team.description || "",
-        team_lead_user_id: team.team_lead_user_id || "",
+        team_lead_user_id: team.team_lead_user_id || "none",
       });
     } else {
       setEditingTeam(null);
-      setFormData({ name: "", description: "", team_lead_user_id: "" });
+      setFormData({ name: "", description: "", team_lead_user_id: "none" });
     }
     setIsDialogOpen(true);
   };
@@ -71,7 +71,7 @@ const TeamManagement = () => {
           .update({
             name: formData.name,
             description: formData.description || null,
-            team_lead_user_id: formData.team_lead_user_id || null,
+            team_lead_user_id: formData.team_lead_user_id === "none" ? null : formData.team_lead_user_id || null,
           })
           .eq("id", editingTeam.id);
         toast.success("Team updated successfully");
@@ -79,7 +79,7 @@ const TeamManagement = () => {
         await supabase.from("teams").insert({
           name: formData.name,
           description: formData.description || null,
-          team_lead_user_id: formData.team_lead_user_id || null,
+          team_lead_user_id: formData.team_lead_user_id === "none" ? null : formData.team_lead_user_id || null,
         });
         toast.success("Team created successfully");
       }
@@ -203,7 +203,7 @@ const TeamManagement = () => {
                   <SelectValue placeholder="Select team lead" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No Lead</SelectItem>
+                  <SelectItem value="none">No Lead</SelectItem>
                   {users.map((user) => (
                     <SelectItem key={user.id} value={user.id}>
                       {user.full_name}

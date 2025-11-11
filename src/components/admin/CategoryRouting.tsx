@@ -58,11 +58,11 @@ const CategoryRouting = () => {
         name: category.name,
         description: category.description || "",
         icon: category.icon || "",
-        team_id: category.team_id || "",
+        team_id: category.team_id || "none",
       });
     } else {
       setEditingCategory(null);
-      setFormData({ name: "", description: "", icon: "📋", team_id: "" });
+      setFormData({ name: "", description: "", icon: "📋", team_id: "none" });
     }
     setIsDialogOpen(true);
   };
@@ -76,7 +76,7 @@ const CategoryRouting = () => {
             name: formData.name,
             description: formData.description || null,
             icon: formData.icon || null,
-            team_id: formData.team_id || null,
+            team_id: formData.team_id === "none" ? null : formData.team_id || null,
           })
           .eq("id", editingCategory.id);
         toast.success("Category updated successfully");
@@ -85,7 +85,7 @@ const CategoryRouting = () => {
           name: formData.name,
           description: formData.description || null,
           icon: formData.icon || null,
-          team_id: formData.team_id || null,
+          team_id: formData.team_id === "none" ? null : formData.team_id || null,
         });
         toast.success("Category created successfully");
       }
@@ -233,7 +233,7 @@ const CategoryRouting = () => {
                   <SelectValue placeholder="Select team" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No Team</SelectItem>
+                  <SelectItem value="none">No Team</SelectItem>
                   {teams.map((team) => (
                     <SelectItem key={team.id} value={team.id}>
                       {team.name}

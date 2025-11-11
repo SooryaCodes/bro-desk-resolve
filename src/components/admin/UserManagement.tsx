@@ -63,7 +63,7 @@ const UserManagement = () => {
     setSelectedUser(user);
     const userRole = getUserRole(user.id);
     setSelectedRole(userRole?.role || "student");
-    setSelectedTeam(userRole?.team_id || "");
+    setSelectedTeam(userRole?.team_id || "none");
     setIsDialogOpen(true);
   };
 
@@ -78,14 +78,14 @@ const UserManagement = () => {
           .from("user_roles")
           .update({
             role: selectedRole as "admin" | "student" | "super_admin" | "team_member",
-            team_id: selectedTeam || null,
+            team_id: selectedTeam === "none" ? null : selectedTeam || null,
           })
           .eq("id", userRole.id);
       } else {
         await supabase.from("user_roles").insert([{
           user_id: selectedUser.id,
           role: selectedRole as "admin" | "student" | "super_admin" | "team_member",
-          team_id: selectedTeam || null,
+          team_id: selectedTeam === "none" ? null : selectedTeam || null,
         }]);
       }
 
@@ -213,7 +213,7 @@ const UserManagement = () => {
                     <SelectValue placeholder="Select team" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No Team</SelectItem>
+                    <SelectItem value="none">No Team</SelectItem>
                     {teams.map((team) => (
                       <SelectItem key={team.id} value={team.id}>
                         {team.name}
