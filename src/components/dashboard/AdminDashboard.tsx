@@ -1,7 +1,11 @@
 import { User } from "@supabase/supabase-js";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Settings } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import UserManagement from "@/components/admin/UserManagement";
+import TeamManagement from "@/components/admin/TeamManagement";
+import CategoryRouting from "@/components/admin/CategoryRouting";
+import Analytics from "@/components/admin/Analytics";
+import { BarChart3, Users, Shield, Tag } from "lucide-react";
 
 interface AdminDashboardProps {
   user: User;
@@ -11,41 +15,50 @@ interface AdminDashboardProps {
 const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
   return (
     <DashboardLayout user={user} userRole={userRole}>
-      <div className="space-y-8">
+      <div className="space-y-6">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Admin Dashboard</h2>
           <p className="text-muted-foreground mt-2">
-            System overview and management
+            Manage users, teams, categories, and view analytics
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                User Management
-              </CardTitle>
-              <CardDescription>Manage users, roles, and teams</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">Coming soon</p>
-            </CardContent>
-          </Card>
+        <Tabs defaultValue="analytics" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="analytics" className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger value="users" className="gap-2">
+              <Shield className="h-4 w-4" />
+              Users
+            </TabsTrigger>
+            <TabsTrigger value="teams" className="gap-2">
+              <Users className="h-4 w-4" />
+              Teams
+            </TabsTrigger>
+            <TabsTrigger value="categories" className="gap-2">
+              <Tag className="h-4 w-4" />
+              Categories
+            </TabsTrigger>
+          </TabsList>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Category Routing
-              </CardTitle>
-              <CardDescription>Configure auto-routing rules</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">Coming soon</p>
-            </CardContent>
-          </Card>
-        </div>
+          <TabsContent value="analytics">
+            <Analytics />
+          </TabsContent>
+
+          <TabsContent value="users">
+            <UserManagement />
+          </TabsContent>
+
+          <TabsContent value="teams">
+            <TeamManagement />
+          </TabsContent>
+
+          <TabsContent value="categories">
+            <CategoryRouting />
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
