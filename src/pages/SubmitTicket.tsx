@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Send, Sparkles, AlertTriangle } from "lucide-react";
 
 interface Category {
   id: string;
@@ -24,6 +24,10 @@ const SubmitTicket = () => {
   const [user, setUser] = useState<User | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [predictedCategory, setPredictedCategory] = useState<string | null>(null);
+  const [duplicates, setDuplicates] = useState<any[]>([]);
+  const [sentiment, setSentiment] = useState<any>(null);
   const [formData, setFormData] = useState({
     category_id: "",
     title: "",
@@ -59,6 +63,73 @@ const SubmitTicket = () => {
 
     if (!error && data) {
       setCategories(data);
+    }
+  };
+
+  const runAIAnalysis = async () => {
+    if (!formData.title || !formData.description) {
+      toast({
+        variant: "destructive",
+        title: "Missing Information",
+        description: "Please enter title and description first",
+      });
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const [categoryResult, duplicateResult, sentimentResult] = await Promise.all([
+        supabase.functions.invoke('ai-ticket-analysis', {
+          body: { type: 'predict_category', title: formData.title, description: formData.description }
+        }),
+        supabase.functions.invoke('ai-ticket-analysis', {
+          body: { type: 'check_duplicates', title: formData.title, description: formData.description }
+        }),
+        supabase.functions.invoke('ai-ticket-analysis', {
+          body: { type: 'analyze_sentiment', title: formData.title, description: formData.description }
+        })
+      ]);
+
+      if (categoryResult.data?.predicted_category_id) {
+        setFormData({ ...formData, category_id: categoryResult.data.predicted_category_id });
+        setPredictedCategory(categoryResult.data.predicted_category_name);
+        toast({
+          title: "AI Suggestion",
+          description: `Suggested category: ${categoryResult.data.predicted_category_name}`,
+        });
+      }
+
+      if (duplicateResult.data?.duplicates && duplicateResult.data.duplicates.length > 0) {
+        setDuplicates(duplicateResult.data.duplicates);
+        toast({
+          variant: "destructive",
+          title: "Similar Tickets Found",
+          description: `Found ${duplicateResult.data.duplicates.length} similar ticket(s). Please review before submitting.`,
+        });
+      } else {
+        setDuplicates([]);
+      }
+
+      if (sentimentResult.data?.sentiment) {
+        setSentiment(sentimentResult.data.sentiment);
+        const urgencyToPriority: any = {
+          low: 'low',
+          medium: 'medium',
+          high: 'high',
+          urgent: 'urgent'
+        };
+        setFormData({ ...formData, priority: urgencyToPriority[sentimentResult.data.sentiment.urgency] || 'medium' });
+      }
+
+    } catch (error: any) {
+      console.error('AI analysis error:', error);
+      toast({
+        variant: "destructive",
+        title: "AI Analysis Failed",
+        description: "You can still submit the ticket manually.",
+      });
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -119,13 +190,61 @@ const SubmitTicket = () => {
           <CardHeader>
             <CardTitle>Issue Details</CardTitle>
             <CardDescription>
-              Provide as much detail as possible to help us resolve your issue quickly
+              Use AI Assist to auto-categorize and check for duplicates
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {duplicates.length > 0 && (
+              <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-sm mb-2">Similar Tickets Found</h4>
+                    <div className="space-y-2">
+                      {duplicates.map((dup) => (
+                        <div key={dup.id} className="text-sm">
+                          <a
+                            href={`/ticket/${dup.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            {dup.ticket_number}: {dup.title}
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {sentiment && (
+              <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <Sparkles className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-sm mb-1">AI Sentiment Analysis</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Sentiment: <span className="font-medium capitalize">{sentiment.sentiment}</span> | 
+                      Urgency: <span className="font-medium capitalize">{sentiment.urgency}</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">{sentiment.reasoning}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="category">Category *</Label>
+                <Label htmlFor="category">
+                  Category *
+                  {predictedCategory && (
+                    <span className="ml-2 text-xs text-primary font-normal">
+                      (AI suggested: {predictedCategory})
+                    </span>
+                  )}
+                </Label>
                 <Select
                   value={formData.category_id}
                   onValueChange={(value) => setFormData({ ...formData, category_id: value })}
@@ -223,13 +342,23 @@ const SubmitTicket = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate('/dashboard')}
-                  disabled={loading}
-                  className="flex-1"
+                  onClick={runAIAnalysis}
+                  disabled={loading || aiLoading}
+                  className="flex-1 gap-2"
                 >
-                  Cancel
+                  {aiLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      AI Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      AI Assist
+                    </>
+                  )}
                 </Button>
-                <Button type="submit" disabled={loading} className="flex-1 gap-2">
+                <Button type="submit" disabled={loading || aiLoading} className="flex-1 gap-2">
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />

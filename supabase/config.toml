@@ -1,1 +1,4 @@
 project_id = "tvxhhnqkhepqaincukch"
+
+[functions.ai-ticket-analysis]
+verify_jwt = false
