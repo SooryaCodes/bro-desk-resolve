@@ -1,52 +1,56 @@
-## BroDesk Setup & Credentials
+## BroDesk Setup & Access
 
-### Default Admin Account
-**IMPORTANT:** Sign up first, then I'll assign admin role.
+### ✅ Admin Access Configured
+**Your account (sooryakriz111@gmail.com) is now a Super Admin!**
 
-- **Email:** `admin@brodesk.com`  
-- **Password:** `Admin123!@#`
+### 🚨 IMPORTANT: Disable Email Confirmation
+**You must do this to login without email verification:**
 
-### Email Verification
-Email verification is **DISABLED** by default for faster testing.
+1. Go to: https://supabase.com/dashboard/project/tvxhhnqkhepqaincukch/auth/providers
+2. Find "Email" provider section
+3. **Toggle "Confirm email" to OFF**
+4. Click **Save**
 
-To configure email settings in Supabase:
-1. Go to https://supabase.com/dashboard/project/tvxhhnqkhepqaincukch/auth/providers
-2. Under "Email" provider settings
-3. Toggle "Confirm email" to OFF (already configured)
+After this, you can login without email verification!
 
-### Accessing Admin Panel
-After logging in with admin credentials:
-1. Navigate to `/admin` route
-2. Or click "Admin Panel" in the navigation menu (visible only to admins)
+### Accessing the System
+1. **Logout** from current session (if logged in)
+2. **Login** at `/auth` with your email: `sooryakriz111@gmail.com`
+3. **Access Admin Panel** at `/admin` or click "Admin Panel" in navigation
 
-### User Roles
-- **student** - Can submit and view their own tickets
-- **team_member** - Can view team tickets, use Kanban board
-- **admin** - Can manage users, teams, categories, and view analytics
-- **super_admin** - Full system access
+### User Roles in System
+- **student** - Submit and view own tickets
+- **team_member** - Manage team tickets, use Kanban board  
+- **admin** - User/team/category management + analytics
+- **super_admin** (YOU) - Complete system access
+
+### Available Routes
+- `/auth` - Login/signup
+- `/dashboard` - Main dashboard (role-based view)
+- `/submit-ticket` - Create new tickets
+- `/ticket/:id` - View ticket details
+- `/admin` - **Admin Panel** (only for admins/super_admins)
 
 ### Email Notifications
-Email notifications are sent for:
-- New user account creation (with credentials)
-- Ticket assigned to team member
-- Ticket status changes
-- New comments on tickets
-- Ticket resolved
+Email notifications automatically sent for:
+- ✉️ New user account creation (with credentials)
+- 📧 Ticket assigned to team member
+- 🔄 Ticket status changes
+- 💬 New comments on tickets
+- ✅ Ticket resolved
 
-Make sure your Resend domain is verified at: https://resend.com/domains
+**Emails sent from:** BroDesk <onboarding@resend.dev>
 
-### Current Users in Database
-You can query users with this SQL:
-```sql
-SELECT p.email, p.full_name, ur.role, t.name as team
-FROM profiles p
-LEFT JOIN user_roles ur ON p.id = ur.user_id
-LEFT JOIN teams t ON ur.team_id = t.id
-ORDER BY p.created_at;
-```
+### Creating New Users (in Admin Panel)
+When you create users in the admin panel:
+1. Navigate to `/admin` → Users tab
+2. Click "Edit User" and assign role/team
+3. System automatically sends email with credentials
+4. New users can login immediately (no email verification needed)
 
-### Next Steps
-1. Sign up with admin credentials
-2. I'll assign the super_admin role to your account
-3. Access admin panel at `/admin`
-4. Start creating teams, categories, and users
+### Testing the System
+1. Create a test ticket as a student
+2. Go to Admin Panel and assign it to a team
+3. Check Kanban board as team member
+4. View analytics and metrics
+5. Test email notifications
