@@ -3,6 +3,10 @@ import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, u
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import { Search, Filter } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import KanbanColumn from "./KanbanColumn";
 import KanbanCard from "./KanbanCard";
 
@@ -25,6 +29,11 @@ interface KanbanBoardProps {
 
 const KanbanBoard = ({ userId }: KanbanBoardProps) => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [filteredTickets, setFilteredTickets] = useState<Ticket[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -38,6 +47,7 @@ const KanbanBoard = ({ userId }: KanbanBoardProps) => {
 
   useEffect(() => {
     fetchTickets();
+    fetchCategories();
 
     // Real-time subscription
     const channel = supabase
@@ -59,6 +69,10 @@ const KanbanBoard = ({ userId }: KanbanBoardProps) => {
       supabase.removeChannel(channel);
     };
   }, [userId]);
+
+  useEffect(() => {
+    filterTickets();
+  }, [tickets, searchQuery, priorityFilter, categoryFilter]);
 
   const fetchTickets = async () => {
     try {
@@ -94,6 +108,45 @@ const KanbanBoard = ({ userId }: KanbanBoardProps) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchCategories = async () => {
+    const { data } = await supabase
+      .from('categories')
+      .select('id, name')
+      .order('name');
+    
+    if (data) {
+      setCategories(data);
+    }
+  };
+
+  const filterTickets = () => {
+    let filtered = [...tickets];
+
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        t => 
+          t.title.toLowerCase().includes(query) ||
+          t.description?.toLowerCase().includes(query) ||
+          t.ticket_number.toLowerCase().includes(query) ||
+          t.profiles?.full_name.toLowerCase().includes(query)
+      );
+    }
+
+    // Priority filter
+    if (priorityFilter !== "all") {
+      filtered = filtered.filter(t => t.priority === priorityFilter);
+    }
+
+    // Category filter
+    if (categoryFilter !== "all") {
+      filtered = filtered.filter(t => t.category_id === categoryFilter);
+    }
+
+    setFilteredTickets(filtered);
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -136,7 +189,7 @@ const KanbanBoard = ({ userId }: KanbanBoardProps) => {
   };
 
   const getTicketsByStatus = (status: Database["public"]["Enums"]["ticket_status"]) => {
-    return tickets.filter((ticket) => ticket.status === status);
+    return filteredTickets.filter((ticket) => ticket.status === status);
   };
 
   if (loading) {
@@ -148,27 +201,94 @@ const KanbanBoard = ({ userId }: KanbanBoardProps) => {
   }
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        {STATUS_COLUMNS.map((column) => (
-          <KanbanColumn
-            key={column.id}
-            id={column.id}
-            title={column.title}
-            color={column.color}
-            tickets={getTicketsByStatus(column.id)}
+    <div className="space-y-4">
+      {/* Search and Filters */}
+      <div className="flex flex-col sm:flex-row gap-3 p-4 bg-card rounded-lg border">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search tickets by title, description, or ticket number..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
           />
-        ))}
+        </div>
+        
+        <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+            <SelectTrigger className="w-full sm:w-[140px]">
+              <SelectValue placeholder="Priority" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Priority</SelectItem>
+              <SelectItem value="low">Low</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="high">High</SelectItem>
+              <SelectItem value="urgent">Urgent</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-full sm:w-[140px]">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat.id} value={cat.id}>
+                  {cat.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {(searchQuery || priorityFilter !== "all" || categoryFilter !== "all") && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                setSearchQuery("");
+                setPriorityFilter("all");
+                setCategoryFilter("all");
+              }}
+              title="Clear filters"
+            >
+              <Filter className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
-      <DragOverlay>
-        {activeTicket ? (
-          <div className="opacity-50 rotate-3">
-            <KanbanCard ticket={activeTicket} isDragging />
-          </div>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+      {/* Active Filters Display */}
+      {(searchQuery || priorityFilter !== "all" || categoryFilter !== "all") && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground px-2">
+          <Filter className="h-4 w-4" />
+          <span>Showing {filteredTickets.length} of {tickets.length} tickets</span>
+        </div>
+      )}
+
+      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {STATUS_COLUMNS.map((column) => (
+            <KanbanColumn
+              key={column.id}
+              id={column.id}
+              title={column.title}
+              color={column.color}
+              tickets={getTicketsByStatus(column.id)}
+            />
+          ))}
+        </div>
+
+        <DragOverlay>
+          {activeTicket ? (
+            <div className="opacity-50 rotate-3">
+              <KanbanCard ticket={activeTicket} isDragging />
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+    </div>
   );
 };
 
