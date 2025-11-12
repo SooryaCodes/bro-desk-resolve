@@ -37,7 +37,7 @@ const DashboardLayout = ({ children, user, userRole }: DashboardLayoutProps) => 
   // Fetch team ID for notifications
   useEffect(() => {
     const fetchTeamId = async () => {
-      if (userRole === "team_member" && user.id) {
+      if (userRole === "team_member" && user?.id) {
         const { data } = await supabase
           .from("user_roles")
           .select("team_id")
@@ -47,11 +47,11 @@ const DashboardLayout = ({ children, user, userRole }: DashboardLayoutProps) => 
       }
     };
     fetchTeamId();
-  }, [user.id, userRole]);
+  }, [user?.id, userRole]);
 
   // Enable real-time notifications
   useTicketNotifications({
-    userId: user.id || "",
+    userId: user?.id || "",
     userRole: userRole || "student",
     teamId,
   });
@@ -65,7 +65,7 @@ const DashboardLayout = ({ children, user, userRole }: DashboardLayoutProps) => 
     navigate('/auth');
   };
 
-  const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+  const fullName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
   const initials = fullName
     .split(' ')
     .map(n => n[0])
@@ -133,7 +133,7 @@ const DashboardLayout = ({ children, user, userRole }: DashboardLayoutProps) => 
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{fullName}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
                     {userRole && <div className="pt-1">{getRoleBadge()}</div>}
                   </div>
                 </DropdownMenuLabel>

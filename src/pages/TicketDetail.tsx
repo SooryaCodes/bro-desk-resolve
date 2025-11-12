@@ -158,14 +158,14 @@ const TicketDetail = () => {
     return colors[priority] || colors.medium;
   };
 
-  if (loading) {
+  if (loading || !user) {
     return (
-      <DashboardLayout user={user!} userRole={userRole || undefined}>
-        <div className="space-y-6">
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="space-y-6 w-full max-w-4xl p-8">
           <Skeleton className="h-12 w-64" />
           <Skeleton className="h-96 w-full" />
         </div>
-      </DashboardLayout>
+      </div>
     );
   }
 
