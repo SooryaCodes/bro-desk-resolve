@@ -55,31 +55,42 @@ const TicketManagement = () => {
   }, []);
 
   const fetchData = async () => {
-    const [ticketsRes, teamsRes] = await Promise.all([
-      supabase
-        .from("tickets")
-        .select("*, profiles!tickets_student_id_fkey(full_name), categories(name)")
-        .order("created_at", { ascending: false }),
-      supabase.from("teams").select("*").order("name"),
-    ]);
+    try {
+      const [ticketsRes, teamsRes] = await Promise.all([
+        supabase
+          .from("tickets")
+          .select("*, profiles!tickets_student_id_fkey(full_name), categories(name)")
+          .order("created_at", { ascending: false }),
+        supabase.from("teams").select("*").order("name"),
+      ]);
 
-    if (ticketsRes.data) setTickets(ticketsRes.data as any);
-    if (teamsRes.data) setTeams(teamsRes.data);
+      if (ticketsRes.error) {
+        console.error("Error fetching tickets:", ticketsRes.error);
+        toast.error("Failed to load tickets");
+      } else if (ticketsRes.data) {
+        setTickets(ticketsRes.data as any);
+      }
 
-    // Fetch all team members
-    const { data: teamMembersData } = await supabase
-      .from("user_roles")
-      .select("user_id, team_id, profiles(id, full_name)")
-      .eq("role", "team_member")
-      .not("team_id", "is", null);
+      if (teamsRes.data) setTeams(teamsRes.data);
 
-    if (teamMembersData) {
-      const members = teamMembersData.map((tm: any) => ({
-        id: tm.user_id,
-        full_name: tm.profiles.full_name,
-        team_id: tm.team_id,
-      }));
-      setTeamMembers(members);
+      // Fetch all team members
+      const { data: teamMembersData } = await supabase
+        .from("user_roles")
+        .select("user_id, team_id, profiles(id, full_name)")
+        .eq("role", "team_member")
+        .not("team_id", "is", null);
+
+      if (teamMembersData) {
+        const members = teamMembersData.map((tm: any) => ({
+          id: tm.user_id,
+          full_name: tm.profiles.full_name,
+          team_id: tm.team_id,
+        }));
+        setTeamMembers(members);
+      }
+    } catch (error: any) {
+      console.error("Error in fetchData:", error);
+      toast.error("An error occurred while loading data");
     }
   };
 

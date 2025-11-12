@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -15,10 +15,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
+import { useTicketNotifications } from "@/hooks/useTicketNotifications";
 
 interface DashboardLayoutProps {
   children: ReactNode;
   user: {
+    id?: string;
     email?: string;
     user_metadata?: {
       full_name?: string;
@@ -30,6 +32,29 @@ interface DashboardLayoutProps {
 const DashboardLayout = ({ children, user, userRole }: DashboardLayoutProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [teamId, setTeamId] = useState<string | null>(null);
+
+  // Fetch team ID for notifications
+  useEffect(() => {
+    const fetchTeamId = async () => {
+      if (userRole === "team_member" && user.id) {
+        const { data } = await supabase
+          .from("user_roles")
+          .select("team_id")
+          .eq("user_id", user.id)
+          .single();
+        setTeamId(data?.team_id || null);
+      }
+    };
+    fetchTeamId();
+  }, [user.id, userRole]);
+
+  // Enable real-time notifications
+  useTicketNotifications({
+    userId: user.id || "",
+    userRole: userRole || "student",
+    teamId,
+  });
 
   const handleLogout = async () => {
     await supabase.auth.signOut();

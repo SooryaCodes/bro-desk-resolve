@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Clock, CheckCircle, AlertCircle, TrendingUp, Users, Timer } from "lucide-react";
+import { Clock, CheckCircle, AlertCircle, TrendingUp, Users, Timer, BarChart3 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface TicketStats {
   total: number;
@@ -12,6 +13,17 @@ interface TicketStats {
   resolved: number;
   closed: number;
   avg_resolution_hours: number;
+}
+
+interface TeamPerformance {
+  team_id: string;
+  team_name: string;
+  total_tickets: number;
+  open_tickets: number;
+  resolved_tickets: number;
+  avg_resolution_hours: number;
+  member_count: number;
+  tickets_per_member: number;
 }
 
 const Analytics = () => {
@@ -25,6 +37,7 @@ const Analytics = () => {
   });
   const [categoryStats, setCategoryStats] = useState<any[]>([]);
   const [priorityStats, setPriorityStats] = useState<any[]>([]);
+  const [teamPerformance, setTeamPerformance] = useState<TeamPerformance[]>([]);
 
   useEffect(() => {
     fetchAnalytics();
@@ -77,6 +90,44 @@ const Analytics = () => {
       }));
 
       setPriorityStats(priStats.filter((p) => p.count > 0));
+
+      // Team Performance Stats
+      const { data: teams } = await supabase.from("teams").select("id, name");
+      const { data: userRoles } = await supabase
+        .from("user_roles")
+        .select("user_id, team_id")
+        .eq("role", "team_member");
+
+      if (teams) {
+        const teamStats = teams.map((team) => {
+          const teamTickets = tickets.filter((t) => t.team_id === team.id);
+          const resolvedTeamTickets = teamTickets.filter((t) => t.resolved_at && t.created_at);
+          
+          const teamAvgResolutionMs =
+            resolvedTeamTickets.length > 0
+              ? resolvedTeamTickets.reduce((acc, t) => {
+                  const created = new Date(t.created_at).getTime();
+                  const resolved = new Date(t.resolved_at!).getTime();
+                  return acc + (resolved - created);
+                }, 0) / resolvedTeamTickets.length
+              : 0;
+
+          const memberCount = userRoles?.filter((ur) => ur.team_id === team.id).length || 0;
+
+          return {
+            team_id: team.id,
+            team_name: team.name,
+            total_tickets: teamTickets.length,
+            open_tickets: teamTickets.filter((t) => t.status === "open" || t.status === "in_progress").length,
+            resolved_tickets: teamTickets.filter((t) => t.status === "resolved" || t.status === "closed").length,
+            avg_resolution_hours: Math.round(teamAvgResolutionMs / (1000 * 60 * 60) * 10) / 10,
+            member_count: memberCount,
+            tickets_per_member: memberCount > 0 ? Math.round((teamTickets.length / memberCount) * 10) / 10 : 0,
+          };
+        });
+
+        setTeamPerformance(teamStats.filter((ts) => ts.total_tickets > 0));
+      }
     }
   };
 
@@ -90,6 +141,14 @@ const Analytics = () => {
           Overview of ticket metrics and team performance
         </p>
       </div>
+
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="teams">Team Performance</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -190,6 +249,68 @@ const Analytics = () => {
           </CardContent>
         </Card>
       </div>
+        </TabsContent>
+
+        <TabsContent value="teams" className="space-y-6">
+          <div className="grid gap-4">
+            {teamPerformance.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-center text-muted-foreground">No team data available yet</p>
+                </CardContent>
+              </Card>
+            ) : (
+              teamPerformance.map((team) => (
+                <Card key={team.team_id}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>{team.team_name}</CardTitle>
+                        <CardDescription>{team.member_count} team members</CardDescription>
+                      </div>
+                      <Badge variant="outline" className="text-lg">
+                        {team.total_tickets} tickets
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Open Tickets</p>
+                        <div className="flex items-center gap-2">
+                          <AlertCircle className="h-4 w-4 text-yellow-600" />
+                          <span className="text-2xl font-bold">{team.open_tickets}</span>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Resolved</p>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <span className="text-2xl font-bold">{team.resolved_tickets}</span>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Avg Resolution</p>
+                        <div className="flex items-center gap-2">
+                          <Timer className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-2xl font-bold">{team.avg_resolution_hours}h</span>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Per Member</p>
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-2xl font-bold">{team.tickets_per_member}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
