@@ -5,6 +5,7 @@ import { User } from "@supabase/supabase-js";
 import StudentDashboard from "@/components/dashboard/StudentDashboard";
 import TeamMemberDashboard from "@/components/dashboard/TeamMemberDashboard";
 import AdminDashboard from "@/components/dashboard/AdminDashboard";
+import SuperAdminDashboard from "@/components/dashboard/SuperAdminDashboard";
 import { Loader2 } from "lucide-react";
 
 const Dashboard = () => {
@@ -65,7 +66,8 @@ const Dashboard = () => {
     <>
       {userRole === 'student' && <StudentDashboard user={user} />}
       {userRole === 'team_member' && <TeamMemberDashboard user={user} />}
-      {(userRole === 'admin' || userRole === 'super_admin') && <AdminDashboard user={user} userRole={userRole} />}
+      {userRole === 'admin' && <AdminDashboard user={user} userRole={userRole} />}
+      {userRole === 'super_admin' && <SuperAdminDashboard user={user} userRole={userRole} />}
     </>
   );
 };
