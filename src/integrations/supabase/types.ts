@@ -229,6 +229,7 @@ export type Database = {
           location: string | null
           priority: Database["public"]["Enums"]["ticket_priority"] | null
           resolved_at: string | null
+          resolved_by: string | null
           sentiment_score: number | null
           status: Database["public"]["Enums"]["ticket_status"] | null
           student_id: string
@@ -248,6 +249,7 @@ export type Database = {
           location?: string | null
           priority?: Database["public"]["Enums"]["ticket_priority"] | null
           resolved_at?: string | null
+          resolved_by?: string | null
           sentiment_score?: number | null
           status?: Database["public"]["Enums"]["ticket_status"] | null
           student_id: string
@@ -267,6 +269,7 @@ export type Database = {
           location?: string | null
           priority?: Database["public"]["Enums"]["ticket_priority"] | null
           resolved_at?: string | null
+          resolved_by?: string | null
           sentiment_score?: number | null
           status?: Database["public"]["Enums"]["ticket_status"] | null
           student_id?: string

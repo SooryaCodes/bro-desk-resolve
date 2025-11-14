@@ -33,6 +33,7 @@ interface TicketData {
   is_anonymous: boolean;
   created_at: string;
   resolved_at: string | null;
+  resolved_by: string | null;
   closed_at: string | null;
   student_id: string;
   assigned_user_id: string | null;
@@ -45,6 +46,10 @@ interface TicketData {
     email: string;
   };
   assigned_to: {
+    full_name: string;
+    email: string;
+  } | null;
+  resolver: {
     full_name: string;
     email: string;
   } | null;
@@ -96,7 +101,8 @@ const TicketDetail = () => {
           *,
           categories (name, icon),
           profiles!tickets_student_id_fkey (full_name, email),
-          assigned_to:profiles!tickets_assigned_user_id_fkey (full_name, email)
+          assigned_to:profiles!tickets_assigned_user_id_fkey (full_name, email),
+          resolver:profiles!tickets_resolved_by_fkey (full_name, email)
         `)
         .eq('id', id!)
         .single();
@@ -311,6 +317,14 @@ const TicketDetail = () => {
                         {new Date(ticket.resolved_at).toLocaleDateString()}
                       </span>
                     </div>
+                    {ticket.resolver && (
+                      <div className="flex items-center gap-2 mt-1">
+                        <UserIcon className="h-4 w-4" />
+                        <span className="text-xs text-muted-foreground">
+                          by {ticket.resolver.full_name}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
 
