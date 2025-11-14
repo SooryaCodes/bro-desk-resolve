@@ -86,18 +86,17 @@ const KanbanBoard = ({ userId }: KanbanBoardProps) => {
         .from("tickets")
         .select(`
           *,
-          profiles!tickets_student_id_fkey (full_name),
+          student:profiles!tickets_student_id_fkey (full_name),
           categories (name)
         `)
         .order("created_at", { ascending: false });
 
-      // Filter based on role - admins see all tickets
+      // Team members only see their team's tickets
       if (userRole?.role === "team_member" && userRole.team_id) {
         query = query.eq("team_id", userRole.team_id);
       } else if (userRole?.role === "student") {
         query = query.eq("student_id", userId);
       }
-      // Admin and super_admin see all tickets - no filter needed
 
       const { data, error } = await query;
 
