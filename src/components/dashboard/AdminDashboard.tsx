@@ -6,7 +6,8 @@ import TeamManagement from "@/components/admin/TeamManagement";
 import CategoryRouting from "@/components/admin/CategoryRouting";
 import Analytics from "@/components/admin/Analytics";
 import TicketManagement from "@/components/admin/TicketManagement";
-import { BarChart3, Users, Shield, Tag, Ticket } from "lucide-react";
+import KanbanBoard from "@/components/kanban/KanbanBoard";
+import { BarChart3, Users, Shield, Tag, Ticket, LayoutGrid } from "lucide-react";
 
 interface AdminDashboardProps {
   user: User;
@@ -24,8 +25,12 @@ const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
           </p>
         </div>
 
-        <Tabs defaultValue="tickets" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+        <Tabs defaultValue="kanban" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="kanban" className="gap-2">
+              <LayoutGrid className="h-4 w-4" />
+              Kanban
+            </TabsTrigger>
             <TabsTrigger value="tickets" className="gap-2">
               <Ticket className="h-4 w-4" />
               Tickets
@@ -47,6 +52,10 @@ const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
               Categories
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="kanban">
+            <KanbanBoard userId={user.id} />
+          </TabsContent>
 
           <TabsContent value="tickets">
             <TicketManagement />
