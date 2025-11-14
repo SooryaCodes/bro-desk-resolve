@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import KanbanColumn from "./KanbanColumn";
 import KanbanCard from "./KanbanCard";
+import StatusUpdateDialog from "./StatusUpdateDialog";
 
 type Ticket = Database["public"]["Tables"]["tickets"]["Row"] & {
   profiles: { full_name: string } | null;
@@ -36,6 +37,12 @@ const KanbanBoard = ({ userId }: KanbanBoardProps) => {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [pendingStatusUpdate, setPendingStatusUpdate] = useState<{
+    ticketId: string;
+    ticketNumber: string;
+    newStatus: Database["public"]["Enums"]["ticket_status"];
+  } | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -166,6 +173,20 @@ const KanbanBoard = ({ userId }: KanbanBoardProps) => {
     const ticket = tickets.find((t) => t.id === ticketId);
     if (!ticket || ticket.status === newStatus) return;
 
+    // Show dialog for status update
+    setPendingStatusUpdate({
+      ticketId,
+      ticketNumber: ticket.ticket_number,
+      newStatus,
+    });
+    setDialogOpen(true);
+  };
+
+  const confirmStatusUpdate = async () => {
+    if (!pendingStatusUpdate) return;
+
+    const { ticketId, newStatus } = pendingStatusUpdate;
+
     // Optimistic update
     setTickets((prev) =>
       prev.map((t) => (t.id === ticketId ? { ...t, status: newStatus } : t))
@@ -185,6 +206,8 @@ const KanbanBoard = ({ userId }: KanbanBoardProps) => {
       toast.error("Failed to update ticket status");
       // Revert optimistic update
       fetchTickets();
+    } finally {
+      setPendingStatusUpdate(null);
     }
   };
 
@@ -288,6 +311,18 @@ const KanbanBoard = ({ userId }: KanbanBoardProps) => {
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      {/* Status Update Dialog */}
+      {pendingStatusUpdate && (
+        <StatusUpdateDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          ticketId={pendingStatusUpdate.ticketId}
+          ticketNumber={pendingStatusUpdate.ticketNumber}
+          newStatus={pendingStatusUpdate.newStatus}
+          onConfirm={confirmStatusUpdate}
+        />
+      )}
     </div>
   );
 };
