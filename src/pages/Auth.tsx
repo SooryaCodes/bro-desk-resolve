@@ -45,7 +45,7 @@ const Auth = () => {
         });
         navigate('/dashboard');
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -58,10 +58,19 @@ const Auth = () => {
 
         if (error) throw error;
 
-        toast({
-          title: "Account created!",
-          description: "Check your email to verify your account.",
-        });
+        // Auto login after signup
+        if (data.session) {
+          toast({
+            title: "Account created!",
+            description: "Welcome to BroDesk!",
+          });
+          navigate('/dashboard');
+        } else {
+          toast({
+            title: "Account created!",
+            description: "You can now sign in.",
+          });
+        }
       }
     } catch (error: any) {
       toast({

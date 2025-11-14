@@ -107,10 +107,12 @@ const DashboardLayout = ({ children, user, userRole }: DashboardLayoutProps) => 
               <NavLink to="/dashboard" end>
                 Dashboard
               </NavLink>
-              <NavLink to="/submit-ticket">
-                Submit Ticket
-              </NavLink>
-              {(userRole === 'admin' || userRole === 'super_admin') && (
+              {userRole === 'student' && (
+                <NavLink to="/submit-ticket">
+                  Submit Ticket
+                </NavLink>
+              )}
+              {userRole === 'admin' && (
                 <NavLink to="/admin">
                   Admin Panel
                 </NavLink>
