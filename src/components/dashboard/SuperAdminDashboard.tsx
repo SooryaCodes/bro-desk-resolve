@@ -5,6 +5,7 @@ import { BarChart3, Users, Ticket } from "lucide-react";
 import Analytics from "@/components/admin/Analytics";
 import SuperAdminUserView from "@/components/admin/SuperAdminUserView";
 import SuperAdminTicketView from "@/components/admin/SuperAdminTicketView";
+import { CreateAdminDialog } from "@/components/admin/CreateAdminDialog";
 
 interface SuperAdminDashboardProps {
   user: User;
@@ -15,11 +16,14 @@ const SuperAdminDashboard = ({ user, userRole }: SuperAdminDashboardProps) => {
   return (
     <DashboardLayout user={user} userRole={userRole}>
       <div className="space-y-6">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Super Admin Dashboard</h2>
-          <p className="text-muted-foreground mt-2">
-            Oversee all system activity, users, and tickets
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">Super Admin Dashboard</h2>
+            <p className="text-muted-foreground mt-2">
+              Oversee all system activity, users, and tickets
+            </p>
+          </div>
+          <CreateAdminDialog />
         </div>
 
         <Tabs defaultValue="tickets" className="space-y-6">
