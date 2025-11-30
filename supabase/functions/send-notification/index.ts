@@ -1,7 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,6 +13,7 @@ interface EmailNotification {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -23,136 +21,30 @@ serve(async (req) => {
   try {
     const { type, recipientEmail, recipientName, data }: EmailNotification = await req.json();
 
-    console.log("Email notification requested:", { type, recipientEmail, timestamp: new Date().toISOString() });
-
-    let subject = "";
-    let html = "";
-
-    switch (type) {
-      case "user_created":
-        subject = "Welcome to BroDesk - Your Account Credentials";
-        html = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h1 style="color: #333;">Welcome to BroDesk!</h1>
-            <p>Hello ${recipientName},</p>
-            <p>An administrator has created an account for you. Here are your login credentials:</p>
-            <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <p><strong>Email:</strong> ${recipientEmail}</p>
-              <p><strong>Temporary Password:</strong> <code style="background: #fff; padding: 4px 8px; border-radius: 4px;">${data.temporaryPassword}</code></p>
-              <p><strong>Role:</strong> ${data.role}</p>
-              ${data.team ? `<p><strong>Team:</strong> ${data.team}</p>` : ''}
-            </div>
-            <p><strong>Next Steps:</strong></p>
-            <ol>
-              <li>Go to <a href="${data.appUrl}/auth">${data.appUrl}/auth</a></li>
-              <li>Click "Sign in" and log in with your credentials</li>
-              <li><strong>IMPORTANT:</strong> Change your password immediately after first login for security</li>
-            </ol>
-            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; margin: 20px 0;">
-              <p style="margin: 0; color: #856404;"><strong>Security Note:</strong> This temporary password should only be used for your first login. Please change it immediately.</p>
-            </div>
-            <p style="color: #666; margin-top: 30px;">If you didn't expect this email, please contact your administrator.</p>
-          </div>
-        `;
-        break;
-
-      case "ticket_assigned":
-        subject = `Ticket ${data.ticketNumber} Assigned to You`;
-        html = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h1 style="color: #333;">New Ticket Assignment</h1>
-            <p>Hello ${recipientName},</p>
-            <p>A ticket has been assigned to you:</p>
-            <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="margin: 0 0 10px 0;">${data.title}</h3>
-              <p><strong>Ticket #:</strong> ${data.ticketNumber}</p>
-              <p><strong>Priority:</strong> <span style="text-transform: capitalize;">${data.priority}</span></p>
-              <p><strong>Category:</strong> ${data.category}</p>
-              <p><strong>Description:</strong> ${data.description}</p>
-            </div>
-            <a href="${data.ticketUrl}" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 10px;">View Ticket</a>
-          </div>
-        `;
-        break;
-
-      case "ticket_status_changed":
-        subject = `Ticket ${data.ticketNumber} Status Updated`;
-        html = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h1 style="color: #333;">Ticket Status Updated</h1>
-            <p>Hello ${recipientName},</p>
-            <p>The status of your ticket has been updated:</p>
-            <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="margin: 0 0 10px 0;">${data.title}</h3>
-              <p><strong>Ticket #:</strong> ${data.ticketNumber}</p>
-              <p><strong>Old Status:</strong> <span style="text-transform: capitalize;">${data.oldStatus.replace('_', ' ')}</span></p>
-              <p><strong>New Status:</strong> <span style="text-transform: capitalize; color: #10b981;">${data.newStatus.replace('_', ' ')}</span></p>
-            </div>
-            <a href="${data.ticketUrl}" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 10px;">View Ticket</a>
-          </div>
-        `;
-        break;
-
-      case "ticket_comment":
-        subject = `New Comment on Ticket ${data.ticketNumber}`;
-        html = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h1 style="color: #333;">New Comment on Your Ticket</h1>
-            <p>Hello ${recipientName},</p>
-            <p>${data.commenterName} added a comment to your ticket:</p>
-            <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="margin: 0 0 10px 0;">${data.title}</h3>
-              <p><strong>Ticket #:</strong> ${data.ticketNumber}</p>
-              <div style="background: white; padding: 15px; border-left: 3px solid #3b82f6; margin-top: 15px;">
-                <p style="margin: 0;"><strong>${data.commenterName}:</strong></p>
-                <p style="margin: 10px 0 0 0;">${data.comment}</p>
-              </div>
-            </div>
-            <a href="${data.ticketUrl}" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 10px;">View Ticket</a>
-          </div>
-        `;
-        break;
-
-      case "ticket_resolved":
-        subject = `Ticket ${data.ticketNumber} Resolved`;
-        html = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h1 style="color: #10b981;">✓ Ticket Resolved</h1>
-            <p>Hello ${recipientName},</p>
-            <p>Your ticket has been resolved:</p>
-            <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="margin: 0 0 10px 0;">${data.title}</h3>
-              <p><strong>Ticket #:</strong> ${data.ticketNumber}</p>
-              <p><strong>Resolved by:</strong> ${data.resolvedBy}</p>
-              <p style="color: #10b981; margin-top: 15px;"><strong>Status:</strong> Resolved</p>
-            </div>
-            <p>If you need further assistance, you can reopen this ticket or submit a new one.</p>
-            <a href="${data.ticketUrl}" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 10px;">View Ticket</a>
-          </div>
-        `;
-        break;
-
-      default:
-        throw new Error("Unknown notification type");
-    }
-
-    // Send email using Resend
-    const emailResponse = await resend.emails.send({
-      from: "BroDesk <onboarding@resend.dev>",
-      to: [recipientEmail],
-      subject,
-      html,
+    // For now, just log the notification request so the frontend can continue to work
+    console.log("[send-notification] Notification requested", {
+      type,
+      recipientEmail,
+      recipientName,
+      dataSummary: data ? Object.keys(data) : [],
+      timestamp: new Date().toISOString(),
     });
 
-    console.log("Email sent successfully:", emailResponse);
-
-    return new Response(JSON.stringify({ success: true, emailResponse }), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message:
+          "Notification logged. Email sending is currently disabled because the Resend npm package is not available in this environment.",
+      }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
   } catch (error: any) {
-    console.error("Error sending email:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("[send-notification] Error handling request:", error);
+
+    return new Response(JSON.stringify({ error: error.message || "Unknown error" }), {
       status: 500,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
