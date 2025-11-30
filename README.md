@@ -9,9 +9,14 @@ A comprehensive, production-ready IT help desk and ticketing system built with R
 ## 🔐 Test Credentials
 
 ### Super Admin Access
+- **Email**: super@brodesk.com
+- **Password**: superbrodesk
+- **Capabilities**: Full system oversight, create admin/team member accounts, view all users, roles, and tickets (read-only)
+
+### Admin Access
 - **Email**: admin@brodesk.com
 - **Password**: adminbrodesk
-- **Capabilities**: Full system oversight, view all users, roles, and tickets (read-only)
+- **Capabilities**: Manage users and roles, assign teams, manage tickets, configure categories, view analytics
 
 ### Student/User Access
 - **Email**: student@brodesk.com
@@ -19,7 +24,7 @@ A comprehensive, production-ready IT help desk and ticketing system built with R
 - **Capabilities**: Submit tickets, track own submissions, upload attachments
 
 ### Additional Roles
-To test Admin and Team Member roles, create new accounts through the signup flow and assign roles via Super Admin dashboard.
+Team Member accounts can be created by Super Admin or Admin through the "Create Admin/Team Member" feature.
 
 ## ✨ Key Features
 
